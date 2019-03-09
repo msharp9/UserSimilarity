@@ -1,0 +1,1 @@
+User similarity score challenge from Pluralsight
