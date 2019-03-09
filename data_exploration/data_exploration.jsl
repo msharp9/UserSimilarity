@@ -1,0 +1,350 @@
+Names Default To Here(1);
+
+//Functions
+savePic = Function({obj, file}, {Default Local},
+	LOCAL_DIR = "D:\PythonMachineLearning\pluralsight\data_exploration\";
+	r = obj << Report;
+	r << Save Picture(LOCAL_DIR || file || ".png");
+	obj << Close Window;
+);
+
+//Const
+LOCAL_DIR = "D:\PythonMachineLearning\pluralsight\data_files\";
+
+//Open Tables
+dtUAS = Open(LOCAL_DIR || "user_assessment_scores.csv", private);
+dtUCV = Open(LOCAL_DIR || "user_course_views.csv", private);
+dtUI = Open(LOCAL_DIR || "user_interests.csv", private);
+dtCT = Open(LOCAL_DIR || "course_tags.csv", private);
+
+//File Exploration
+dtUAS:user_handle << Set Modeling Type("Nominal");
+
+scoresVusers = dtUAS << Graph Builder(
+	Size( 1737, 955 ),
+	Show Control Panel( 0 ),
+	Variables(
+		X(
+			:user_handle,
+			Order By(
+				:user_assessment_score,
+				Descending,
+				Order Statistic( "Mean" )
+			)
+		),
+		Y( :user_assessment_score )
+	),
+	Elements( Box Plot( X, Y, Legend( 6 ) ) ),
+	SendToReport(
+		Dispatch(
+			{},
+			"user_assessment_score",
+			ScaleBox,
+			{Add Ref Line( 142.5, "Solid", "Black", "Mean Line", 1 )}
+		)
+	)
+);
+savePic(scoresVusers, "scoresVusers");
+scoresVtags = dtUAS << Graph Builder(
+	Size( 1057, 822 ),
+	Show Control Panel( 0 ),
+	Variables(
+		X(
+			:assessment_tag,
+			Order By(
+				:user_assessment_score,
+				Descending,
+				Order Statistic( "Mean" )
+			)
+		),
+		Y( :user_assessment_score )
+	),
+	Elements( Contour( X, Y, Legend( 7 ) ), Box Plot( X, Y, Legend( 8 ) ) ),
+	SendToReport(
+		Dispatch(
+			{},
+			"user_assessment_score",
+			ScaleBox,
+			{Add Ref Line( 142.5, "Solid", "Black", "Mean Line", 1 )}
+		)
+	)
+);
+savePic(scoresVtags, "scoresVtags");
+wordcloud = dtUAS << Text Explorer(
+	Text Columns( :assessment_tag ),
+	Set Regex(
+		Library( "Money" ),
+		Library( "Words" ),
+		Library( "HTML Link Grabber" ),
+		Library( "Time" ),
+		Library( "Numbers" )
+	),
+	Show Word Cloud( 1 ),
+	Layout( "Centered" ),
+	Coloring( "By column values", :user_assessment_score ),
+	Language( "English" ),
+	SendToReport(
+		Dispatch( {}, "", IfBox, {Set Summary Behavior( "Visible" )} ),
+		Dispatch(
+			{"Term and Phrase Lists"},
+			"",
+			TableBox,
+			{Set Summary Behavior( "Collapse" )}
+		)
+	)
+);
+savePic(wordcloud, "assessment_cloud");
+
+dtUCV:user_handle << Set Modeling Type("Nominal");
+dtUCV:author_handle << Set Modeling Type("Nominal");
+dtUCV:level << Set Property("Value Ordering", {"Beginner", "Intermediate", "Advanced"});
+
+watchhistory = dtUCV << Graph Builder(
+	Size( 1820, 955 ),
+	Show Control Panel( 0 ),
+	Variables( X( :view_date ), Y( :view_time_seconds ) ),
+	Elements( Contour( X, Y, Legend( 21 ) ) )
+);
+savePic(watchhistory, "watchhistory");
+authors_viewtimes = dtUCV << Graph Builder(
+	Size( 1017, 668 ),
+	Show Control Panel( 0 ),
+	Variables( X( :author_handle ), Y( :view_time_seconds ) ),
+	Elements( Box Plot( X, Y, Legend( 5 ) ) )
+);
+savePic(authors_viewtimes, "authors_viewtimes_950");
+authors_viewtimes = dtUCV << Graph Builder(
+	Size( 1017, 668 ),
+	Show Control Panel( 0 ),
+	Variables(
+		X(
+			:author_handle,
+			Order By( :view_time_seconds, Descending, Order Statistic( "Mean" ) )
+		),
+		Y( :view_time_seconds )
+	),
+	Elements( Box Plot( X, Y, Legend( 6 ) ) )
+);
+savePic(authors_viewtimes, "authors_viewtimes");
+popular_authors = dtUCV << Graph Builder(
+	Size( 1186, 707 ),
+	Show Control Panel( 0 ),
+	Variables( X( :author_handle ), Color( :level ) ),
+	Elements( Bar( X, Legend( 5 ), Bar Style( "Packed" ) ) ),
+	SendToReport(
+		Dispatch(
+			{},
+			"400",
+			ScaleBox,
+			{Legend Model(
+				5,
+				Properties(
+					0,
+					{Line Color( -16252157 ), Fill Color( -16252157 )},
+					Item ID( "Beginner", 1 )
+				),
+				Properties(
+					1,
+					{Line Color( -6734500 ), Fill Color( -6734500 )},
+					Item ID( "Intermediate", 1 )
+				),
+				Properties(
+					2,
+					{Line Color( -17435 ), Fill Color( -17435 )},
+					Item ID( "Advanced", 1 )
+				)
+			)}
+		)
+	)
+);
+savePic(popular_authors, "popular_authors");
+active_users = dtUCV << Graph Builder(
+	Size( 876, 634 ),
+	Show Control Panel( 0 ),
+	Variables( X( :user_handle ), Color( :level ) ),
+	Elements( Bar( X, Legend( 3 ), Bar Style( "Packed" ) ) ),
+	SendToReport(
+		Dispatch(
+			{},
+			"400",
+			ScaleBox,
+			{Legend Model(
+				3,
+				Properties(
+					0,
+					{Line Color( -16252157 ), Fill Color( -16252157 )},
+					Item ID( "Beginner", 1 )
+				),
+				Properties(
+					1,
+					{Line Color( -6734500 ), Fill Color( -6734500 )},
+					Item ID( "Intermediate", 1 )
+				),
+				Properties(
+					2,
+					{Line Color( -17435 ), Fill Color( -17435 )},
+					Item ID( "Advanced", 1 )
+				)
+			)}
+		)
+	)
+);
+savePic(active_users, "active_users");
+scatterplot_summary = dtUCV << Scatterplot 3D(
+	Y( :view_time_seconds, :user_handle, :author_handle ),
+	Coloring( :level ),
+	Legend( 3 ),
+	Frame3D(
+		Legend( 1 ),
+		Set Grab Handles( 0 ),
+		Set Rotation( 22.0313043460836, -64.9145312317427, 108.621408525529 )
+	),
+	SendToReport(
+		Dispatch(
+			{},
+			"1",
+			ScaleBox,
+			{Min( -1549.80079681275 ), Max( 44450.1992031873 ), Inc( 2000 ),
+			Minor Ticks( 1 )}
+		)
+	)
+);
+savePic(scatterplot_summary, "scatterplot_summary");
+watchtime_by_level = dtUCV << Fit Group(
+	Oneway(
+		Y( :view_time_seconds ),
+		X( :level ),
+		Means( 1 ),
+		Mean Diamonds( 1 ),
+		Points Jittered( 1 ),
+		SendToReport(
+			Dispatch(
+				{},
+				"Oneway Plot",
+				FrameBox,
+				{Frame Size( 559, 482 ), Row Legend(
+					level,
+					Color( 1 ),
+					Color Theme( "JMP Default" ),
+					Marker( 0 ),
+					Marker Theme( "" ),
+					Continuous Scale( 0 ),
+					Reverse Scale( 0 ),
+					Excluded Rows( 0 )
+				)}
+			)
+		)
+	),
+	Bivariate(
+		Y( :view_time_seconds ),
+		X( :view_date ),
+		Fit Where(
+			:level == "Beginner",
+			Fit Spline( 0.1, Standardized, {Line Color( {212, 73, 88} )} )
+		),
+		Fit Where(
+			:level == "Intermediate",
+			Fit Spline( 0.1, Standardized, {Line Color( {61, 174, 70} )} )
+		),
+		Fit Where(
+			:level == "Advanced",
+			Fit Spline( 0.1, Standardized, {Line Color( {66, 112, 221} )} )
+		),
+		SendToReport(
+			Dispatch(
+				{},
+				"Bivar Plot",
+				FrameBox,
+				{Frame Size( 564, 474 ), Row Legend(
+					:level,
+					Color( 1 ),
+					Color Theme( "JMP Default" ),
+					Marker( 0 ),
+					Marker Theme( "" ),
+					Continuous Scale( 0 ),
+					Reverse Scale( 0 ),
+					Excluded Rows( 0 )
+				)}
+			)
+		)
+	),
+	<<{Arrange in Rows( 2 )}
+);
+savePic(watchtime_by_level, "watchtime_by_level");
+
+dtUI:user_handle << Set Modeling Type("Nominal");
+dtUI << New Column("day", Numeric, Nominal, Formula( :date_followed - Time Of Day( :date_followed )));
+
+popular_interests = dtUI << Graph Builder(
+	Size( 1829, 955 ),
+	Show Control Panel( 0 ),
+	Variables( X( :interest_tag ) ),
+	Elements( Bar( X, Legend( 5 ), Bar Style( "Packed" ) ) )
+);
+savePic(popular_interests, "popular_interests");
+dtUI_summary = dtUI << Summary(private,
+	Group( :day, :interest_tag ),
+	Freq( "None" ),
+	Weight( "None" ),
+	output table name( "user_interests_summary" )
+);
+interests_over_time = dtUI_summary << Graph Builder(
+	Size( 947, 631 ),
+	Show Control Panel( 0 ),
+	Variables( X( :day ), Y( :N Rows ), Overlay( :interest_tag ) ),
+	Elements( Smoother( X, Y, Legend( 11 ) ) )
+);
+savePic(interests_over_time, "interests_over_time");
+close(dtUI_summary, save(LOCAL_DIR || "userinterest_by_time.csv"));
+dtUI_summary2 = dtUI << Summary(private,
+	Group( :user_handle, :date_followed ),
+	Freq( "None" ),
+	Weight( "None" ),
+	output table name( "user_activity_summary" )
+);
+useractivity_by_time = dtUI_summary = Graph Builder(
+	Size( 1749, 955 ),
+	Show Control Panel( 0 ),
+	Variables( X( :date_followed ), Y( :N Rows ), Overlay( :user_handle ) ),
+	Elements( Points( X, Y, Legend( 40 ) ), Smoother( X, Y, Legend( 41 ) ) )
+);
+savePic(useractivity_by_time, "useractivity_by_time");
+close(dtUI_summary2, save(LOCAL_DIR || "useractivity_by_time.csv"));
+
+dtCT_summary = dtCT << Summary(private,
+	Group( :course_tags ),
+	Freq( "None" ),
+	Weight( "None" ),
+	output table name( "course_tags_summary" )
+);
+dtCT_summary << Sort(
+	By( :N Rows ),
+	Order( Descending ),
+	Replace Table(1)
+);
+close(dtCT_summary, save(LOCAL_DIR || "course_tags_summary.csv"));
+wordcloud = dtCT << Text Explorer(
+	Text Columns( :course_tags ),
+	Set Regex(
+		Library( "Money" ),
+		Library( "Words" ),
+		Library( "HTML Link Grabber" ),
+		Library( "Time" ),
+		Library( "Numbers" )
+	),
+	Show Word Cloud( 1 ),
+	Layout( "Ordered" ),
+	Language( "English" ),
+	SendToReport(
+		Dispatch( {}, "", IfBox, {Set Summary Behavior( "Visible" )} ),
+		Dispatch( {}, "Term and Phrase Lists", OutlineBox, {Close( 1 )} ),
+		Dispatch(
+			{"Term and Phrase Lists"},
+			"",
+			TableBox,
+			{Set Summary Behavior( "Collapse" )}
+		)
+	)
+);
+savePic(wordcloud, "courses_cloud");
+
