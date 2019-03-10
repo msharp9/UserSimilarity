@@ -70,12 +70,6 @@ def config(filename='database.ini', section='postgresql'):
         raise Exception('Section {0} not found in the {1} file'.format(section, filename))
     return db
 
-
-COURSE_TAGS = 'data_files/course_tags.csv'
-USER_ASSESSMENT_SCORES = 'data_files/user_assessment_scores.csv'
-USER_INTERESTS = 'data_files/user_interests.csv'
-USER_COURSE_VIEWS = 'data_files/user_course_views.csv'
-
 def loadCSV(file, **kwargs):
     '''
     >>> loadCSV('data_files/test.csv')
@@ -92,20 +86,47 @@ def userFeatures():
     >>> userFeatures().shape
     (10000, 3220)
     '''
+    sqlUAS = '''Select user_handle
+            ,assessment_tag
+            ,user_assessment_date
+            ,user_assessment_score
+        FROM user_assessment_scores'''
+    sqlUI = '''Select user_handle
+            ,interest_tag
+            ,date_followed
+        FROM user_interests'''
+    sqlCT = '''Select course_id
+            ,course_tags
+        FROM course_tags'''
+    sqlUCV = '''Select user_handle
+            ,view_date
+            ,course_id
+            ,author_handle
+            ,level
+            ,view_time_seconds
+        FROM user_course_views'''
+
     params = config()
     conn = psycopg2.connect(**params)
     cur = conn.cursor()
 
-    cur.execute('SELECT version()')
-    db_version = cur.fetchone()
-    print(db_version)
-    # cur.close()
+    cur.execute(sqlUAS)
+    rows = cur.fetchall()
+    dfUAS = pd.DataFrame(rows, columns=['user_handle', 'assessment_tag',
+        'user_assessment_date', 'user_assessment_score'])
+    cur.execute(sqlUI)
+    rows = cur.fetchall()
+    dfUI = pd.DataFrame(rows, columns=['user_handle', 'interest_tag',
+        'date_followed'])
+    cur.execute(sqlCT)
+    rows = cur.fetchall()
+    dfCT = pd.DataFrame(rows, columns=['course_id', 'course_tags'])
+    cur.execute(sqlUCV)
+    rows = cur.fetchall()
+    dfUCV = pd.DataFrame(rows, columns=['user_handle', 'view_date', 'course_id',
+        'author_handle', 'level', 'view_time_seconds'])
 
-    dfUAS = loadCSV(USER_ASSESSMENT_SCORES)
-    dfUI = loadCSV(USER_INTERESTS)
-    dfCT = loadCSV(COURSE_TAGS)
-    dfUCV = loadCSV(USER_COURSE_VIEWS)
-
+    conn.close()
 
 
     dfAssScores = dfUAS.groupby('user_handle').agg(
