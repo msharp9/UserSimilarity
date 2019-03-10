@@ -1,9 +1,13 @@
+# !/usr/bin/python
 import os
 import sys
 # import datetime
 
 import numpy as np
 import pandas as pd
+
+import psycopg2
+from configparser import ConfigParser
 
 from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import StandardScaler
@@ -49,6 +53,23 @@ class Form():
         else:
             return []
 
+def config(filename='database.ini', section='postgresql'):
+    '''
+    >>> config()
+    {'host': 'localhost', 'database': 'pluralsight', 'user': 'postgres', 'password': 'postgres', 'port': '5432'}
+    '''
+    parser = ConfigParser()
+    parser.read(filename)
+
+    db = {}
+    if parser.has_section(section):
+        params = parser.items(section)
+        for param in params:
+            db[param[0]] = param[1]
+    else:
+        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
+    return db
+
 
 COURSE_TAGS = 'data_files/course_tags.csv'
 USER_ASSESSMENT_SCORES = 'data_files/user_assessment_scores.csv'
@@ -71,10 +92,21 @@ def userFeatures():
     >>> userFeatures().shape
     (10000, 3220)
     '''
+    params = config()
+    conn = psycopg2.connect(**params)
+    cur = conn.cursor()
+
+    cur.execute('SELECT version()')
+    db_version = cur.fetchone()
+    print(db_version)
+    # cur.close()
+
     dfUAS = loadCSV(USER_ASSESSMENT_SCORES)
     dfUI = loadCSV(USER_INTERESTS)
     dfCT = loadCSV(COURSE_TAGS)
     dfUCV = loadCSV(USER_COURSE_VIEWS)
+
+
 
     dfAssScores = dfUAS.groupby('user_handle').agg(
             { 'user_assessment_score' : ['mean', 'count'] }
