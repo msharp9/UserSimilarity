@@ -106,28 +106,34 @@ def userFeatures():
             ,view_time_seconds
         FROM user_course_views'''
 
-    params = config()
-    conn = psycopg2.connect(**params)
-    cur = conn.cursor()
+    try:
+        params = config()
+        conn = psycopg2.connect(**params)
+        cur = conn.cursor()
 
-    cur.execute(sqlUAS)
-    rows = cur.fetchall()
-    dfUAS = pd.DataFrame(rows, columns=['user_handle', 'assessment_tag',
-        'user_assessment_date', 'user_assessment_score'])
-    cur.execute(sqlUI)
-    rows = cur.fetchall()
-    dfUI = pd.DataFrame(rows, columns=['user_handle', 'interest_tag',
-        'date_followed'])
-    cur.execute(sqlCT)
-    rows = cur.fetchall()
-    dfCT = pd.DataFrame(rows, columns=['course_id', 'course_tags'])
-    cur.execute(sqlUCV)
-    rows = cur.fetchall()
-    dfUCV = pd.DataFrame(rows, columns=['user_handle', 'view_date', 'course_id',
-        'author_handle', 'level', 'view_time_seconds'])
+        cur.execute(sqlUAS)
+        rows = cur.fetchall()
+        dfUAS = pd.DataFrame(rows, columns=['user_handle', 'assessment_tag',
+            'user_assessment_date', 'user_assessment_score'])
+        cur.execute(sqlUI)
+        rows = cur.fetchall()
+        dfUI = pd.DataFrame(rows, columns=['user_handle', 'interest_tag',
+            'date_followed'])
+        cur.execute(sqlCT)
+        rows = cur.fetchall()
+        dfCT = pd.DataFrame(rows, columns=['course_id', 'course_tags'])
+        cur.execute(sqlUCV)
+        rows = cur.fetchall()
+        dfUCV = pd.DataFrame(rows, columns=['user_handle', 'view_date', 'course_id',
+            'author_handle', 'level', 'view_time_seconds'])
 
-    conn.close()
-
+        conn.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print('Content-Type: text/plain')
+        print('Status: 500 Server Error')
+        print()
+        print("Error connecting to database {}".format(error))
+        sys.exit('Error connecting to database')
 
     dfAssScores = dfUAS.groupby('user_handle').agg(
             { 'user_assessment_score' : ['mean', 'count'] }
@@ -207,7 +213,6 @@ def main():
 
 
 if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
-
+    # import doctest
+    # doctest.testmod()
     main()
