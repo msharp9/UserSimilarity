@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.neighbors import NearestNeighbors
+from sklearn.preprocessing import StandardScaler
 
 import cgi
 import json
@@ -83,6 +84,9 @@ def userFeatures():
                 'view_time_seconds' : ['mean', 'sum', 'count'],
             }
         )
+    sc = StandardScaler()
+    dfAssScores['user_assessment_score'] = sc.fit_transform(dfAssScores['user_assessment_score'])
+    dfUserViews['view_time_seconds'] = sc.fit_transform(dfUserViews['view_time_seconds'])
 
     dfLevel = pd.crosstab(dfUCV.user_handle, dfUCV.level)
     dfAuthors = pd.crosstab(dfUCV.user_handle, dfUCV.author_handle)
@@ -129,7 +133,7 @@ def main():
     >>> main()
     Content-Type: application/json
     <BLANKLINE>
-    [4065, 1872, 9532, 4411, 1526, 9966, 7173, 7663, 5991, 802]
+    [6531, 1712, 6221, 329, 4092, 358, 1968, 1084, 1983, 9258]
     '''
     form = Form()
     userid = form.checkForm('userid')[0]
