@@ -1,0 +1,27 @@
+1. Tell us about your similarity calculation and why you chose it.
+
+My similarity calculation is just a distance metric for each user in their feature
+space.  With this, I am just implementing a simple nearest neighbors algorithm.
+Specifically I'm using the Minkowski distance which is a combination of Euclidean
+distance and Manhattan distance.
+
+2. We have provided you with a relatively small sample of users. At true scale, the
+number of users, and their associated behavior, would be much larger. What
+considerations would you make to accommodate that?
+
+The nearest neighbors algorithm is known to be fast, but memory intensive.  Indexing
+the users feature space and distances would improve performance, similar to a search
+engine.  I would also, use a more modern api like WSGI versus CGI.  I used CGI to
+keep things simple.
+
+3. Given the context for which you might assume an API like this would be used, is
+there anything else you would think about? (e.g. other data you would
+like to collect)
+
+The most obvious use case for this type of API is to make friend suggestions.  It
+would be useful to know who else a user is already connected to, their location,
+job description/title, company they work for, user interests outside of classes.
+Alternatively, it could be used to create 'enemy' suggestions.  Many individuals are
+motivated by competition and having a rival helps elevate performance and learning.
+More outside the box, knowing what users are similar may help improve suggestions
+for the next course they should take and authors they may like.
